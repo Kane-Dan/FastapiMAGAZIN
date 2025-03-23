@@ -1,0 +1,51 @@
+version: "3.12"
+
+services:
+  db:
+    image: postgres:latest
+    container_name: fastapimagaz_db
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: fastapimagaz_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapimagaz_web
+    environment:
+      # Переопределяем переменные подключения к базе данных, чтобы использовать сервисы Docker
+      DB_HOST: "db"
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      # Параметры приложения
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: ${ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS}
+      # Для Redis – используем имя сервиса, а не localhost
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_DB: ${REDIS_DB}
+    ports:
+      - "8030:8030"
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  postgres_data:
