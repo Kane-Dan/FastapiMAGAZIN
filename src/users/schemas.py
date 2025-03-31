@@ -9,3 +9,6 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     number: str
     password: str
+
+class UserSeach(BaseModel):
+    number: str

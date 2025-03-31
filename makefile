@@ -8,7 +8,7 @@ SERVICE_DB = db
 
 # Сборка контейнеров
 build:
-	$(DOCKER_COMPOSE) build
+	$(DOCKER_COMPOSE) build --no-cache
 
 # Запуск контейнеров в фоновом режиме
 up:
@@ -24,3 +24,4 @@ migrate:
 
 
 start: build up migrate
+

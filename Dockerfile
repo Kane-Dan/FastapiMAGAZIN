@@ -18,7 +18,7 @@ WORKDIR /app
 
 # Устанавливаем переменные окружения для Poetry
 ENV PATH="/root/.local/bin:$PATH" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_VIRTUALENVS_CREATE=false \
     POETRY_NO_INTERACTION=1
 
 # Копируем файлы Poetry

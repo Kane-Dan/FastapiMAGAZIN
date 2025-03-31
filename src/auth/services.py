@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from fastapi.security import OAuth2PasswordBearer
-from authlib.jose import jwt as jwt_authlib
+
 import jwt
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -12,22 +12,24 @@ from src.auth.models import Tokens
 from src.users.schemas import UserLogin
 from src.auth.models import Tokens
 from jwt import ExpiredSignatureError
+
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class AuthServices:
     # Создание временого токена
-    async def create_access_token(user_id: int):
+    async def create_access_token(user_id: int, role: str) -> str:
         payload = {
-            "sub": user_id,  # user_id как число
-            "exp": datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
+            "sub": str(user_id), 
+            "exp": datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES)),
+            "role": role
         }
         access_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-
         return access_token
         
     # сохранение временого токена
-    async def save_access_token(token: str, user_id: int):
+    async def save_access_token(token: str, user_id: int)-> str:
         async with async_session_maker() as session:
             existing_token: Tokens = await session.execute(
                 select(Tokens).where(Tokens.user_id == user_id)
@@ -35,7 +37,7 @@ class AuthServices:
             existing_token = existing_token.scalars().first()
             if existing_token:
                 existing_token.token = token
-                existing_token.expires_at = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+                existing_token.expires_at = datetime.utcnow() + timedelta (minutes =    int(ACCESS_TOKEN_EXPIRE_MINUTES))
                 await session.commit()
                 return existing_token.token
             else:
@@ -49,43 +51,14 @@ class AuthServices:
                 return new_token.token
     
     # верификация временого токена
-    async def verify_access_token(data: dict):        
-        token = data.get("token")
-        user_id = data.get("user_id")
-        if not token or not user_id:
-            raise HTTPException(status_code=400, detail="Неверные данные: отсутствует token или user_id")
-        async with async_session_maker() as session:
-            async with session.begin():
-                
-                result = await session.execute(
-                    select(Tokens).where(Tokens.user_id == user_id, Tokens.token == token)
-                )
-                token_entry = result.scalars().first()
+    async def verify_access_token_login(user_id: int)-> str:
+    # Получаем токен из базы данных
+        access_token = await AuthServices.get_access_token(user_id)
 
-                if not token_entry:
-                    raise HTTPException(status_code=401, detail="Токен не найден")
-            
-                if token_entry.expires_at < datetime.utcnow():
-                    
-                    refresh_token = await AuthServices.verify_refresh_token(user_id)
+        
 
-                    
-                    new_access_token = await AuthServices.create_access_token(user_id)  # Используем await
+    
 
-                    # Обновляем токен в базе данных
-                    token_entry.token = new_access_token
-                    token_entry.expires_at = datetime.utcnow() + timedelta(minutes=int(ACCESS_TOKEN_EXPIRE_MINUTES))
-
-                    # Сохраняем изменения
-                    session.add(token_entry)
-                    await session.commit()
-
-                    print("Новый токен создан и сохранен.")
-                    return new_access_token
-
-                print("Токен не истек, возвращаем существующий токен.")
-                return token_entry.token
-            
     # получение временого токена
     async def get_access_token(user_id: int) -> str:
         async with async_session_maker() as session:
@@ -102,10 +75,11 @@ class AuthServices:
                     return None 
     
     # Создание токена обновления
-    async def create_refresh_token(user_id: int):
+    async def create_refresh_token(user_id: int, role:str)-> str:
         payload = {
-        "sub": user_id,  
-        "exp": datetime.utcnow() + timedelta(days=int(REFRESH_TOKEN_EXPIRE_DAYS))
+        "sub": str(user_id),  
+        "exp": datetime.utcnow() + timedelta(days=int(REFRESH_TOKEN_EXPIRE_DAYS)),
+        "role": role
     }
         refresh_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
         return refresh_token
@@ -119,7 +93,7 @@ class AuthServices:
 
 
     # Получчение токена обновления
-    async def get_refresh_token(user_id: int):
+    async def get_refresh_token(user_id: int)-> str:
         refresh_token = await REDIS_URL.get(f"refresh_token:{user_id}")
         if refresh_token is None:
             print(f"No token found for user ID {user_id}")
@@ -128,19 +102,47 @@ class AuthServices:
     
     
     # Верефикация токена обновления
-    async def verify_refresh_token(user_id: int):
+    # async def verify_refresh_token_for_update_accestoken(user_id: int):
+    #     stored_refresh_token = await REDIS_URL.get(f"refresh_token:{user_id}")
+        
+    #     if stored_refresh_token is None:
+    #         raise HTTPException(status_code=404, detail="Токен не найден")
+
+    #     refresh_token = stored_refresh_token.decode('utf-8')
+    #     try:
+    #         payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+            
+    #         token_user_id = payload.get("sub")
+    #         if token_user_id != user_id:
+    #             raise HTTPException(status_code=401, detail="Несоответствие user_id в токене")
+        
+    #     except jwt.ExpiredSignatureError:
+    #         await REDIS_URL.delete(f"refresh_token:{user_id}")
+    #         raise HTTPException(status_code=401, detail="Токен истек и был удален")
+    #     except jwt.PyJWTError:
+    #         raise HTTPException(status_code=401, detail="Неправильный токен")     
+    #     return refresh_token
+    
+
+
+#Вериф для авторизации
+    async def verify_refresh_token (user_id :int,role:str)-> str:
         stored_refresh_token = await REDIS_URL.get(f"refresh_token:{user_id}")
         
         if stored_refresh_token is None:
-            raise HTTPException(status_code=404, detail="Токен не найден")
-
+            print("Токена нет в базе данных")
+            return None 
+            
         refresh_token = stored_refresh_token.decode('utf-8')
-        print(refresh_token)
-        try:
-            payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-        except jwt.ExpiredSignatureError:
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
+        
+        if payload.get('sub')!= str(user_id):
+            print ("Юзер в токене не является юзером проходящим регистроцию")
+            return None
+        exp_time = datetime.utcfromtimestamp(payload.get('exp'))
+        if exp_time < datetime.utcnow() + timedelta(days = 1):
             await REDIS_URL.delete(f"refresh_token:{user_id}")
-            raise HTTPException(status_code=401, detail="Токен истек и был удален")
-        except jwt.JWTError:
-            raise HTTPException(status_code=401, detail="Неправильный токен")
+            print("Токен истек, удаление")
+            return None
+        
         return refresh_token

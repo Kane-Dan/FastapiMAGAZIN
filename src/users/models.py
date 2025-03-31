@@ -5,6 +5,7 @@ from datetime import datetime
 from pydantic import EmailStr
 metadata = MetaData()
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -15,6 +16,6 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    role = Column(String, default = "user")
 
-    # Отношение к таблице Tokens
     tokens = relationship("Tokens", back_populates="user")

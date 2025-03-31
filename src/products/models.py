@@ -2,7 +2,7 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, MetaData, String, Boolean, Integer
 from src.database import Base
 from sqlalchemy.orm import relationship
-
+from src.categories.models import Category
 metadata = MetaData()
 
 class Product(Base):

@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy import delete, select
 from src.database import async_session_maker
 from fastapi.responses import JSONResponse
@@ -48,3 +49,5 @@ class UsersServices:
             result = await session.execute(stmt)
             user = result.scalar_one_or_none()
             return user 
+        
+    
