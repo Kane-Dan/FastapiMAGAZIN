@@ -7,6 +7,7 @@ from src.users.models import User
 from fastapi.responses import JSONResponse
 from src.categories.models import Category
 from src.categories.schemas import New_category
+from src.products.models import Product
 
 class Admin_services:       
     async def get_role_from_cookie(request: Request):
@@ -71,7 +72,36 @@ class Admin_services:
             await session.refresh(new_category)
 
             return new_category.id
-        
+
+    async def get_category_by_name(Category_name):
+        async with async_session_maker() as session:
+            result = await session.execute(select(Category).where(Category.name == Category_name))    
+            category = result.scalars().first()
+            return category
+
+
+
 
         
-                
+    async def create_new_product(data:dict):
+        async with async_session_maker() as session:
+            product_category_name = data.get("category_name")
+
+            result = await Admin_services.get_category_by_name(Category_name = product_category_name  )
+              
+            if not result:
+                raise HTTPException(status_code= 404,detail="Категория с таким именнем не найдена!")
+
+            new_product = Product(
+                name = data["name"],
+                price = data["price"],
+                picture = data["picture"],
+                description = data["description"],
+                category_id = result.id
+            )                                
+            session.add(new_product)
+            await session.commit()
+            await session.refresh(new_product)
+            return new_product.id
+        
+    

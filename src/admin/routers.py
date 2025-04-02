@@ -9,12 +9,15 @@ from src.users.models import User
 from src.auth.services import AuthServices
 from sqlalchemy.orm import selectinload
 from src.categories.schemas import find_category_by_id
+from src.products.schemas import Products_shema,Product_by_id
+from src.products.models import Product
+
 router = APIRouter()
 
 
 # ___________________Права для пользователей_______________________________________________________________________________________________________________________________________________________________________________________________
 
-@router.patch("/Privileges add Admin")
+@router.patch("/Privileges Admin")
 async def add_admin_user(data: UserSeach,request: Request):
     role = await Admin_services.get_role_from_cookie(request)
     if role != "admin":
@@ -43,7 +46,7 @@ async def add_admin_user(data: UserSeach,request: Request):
         return {"message": "Вы выдали пользователю права Администратора"}
 
 
-@router.patch("/Privileges off")
+@router.patch("/Privileges User")
 async def delete_privileges_user(data: UserSeach,request: Request):
     role = await Admin_services.get_role_from_cookie(request)
     if role != "admin":
@@ -73,7 +76,7 @@ async def delete_privileges_user(data: UserSeach,request: Request):
 
         return {"message": "Вы забрали у пользователя права Администратора"}    
     
-@router.patch("/Privileges worker")
+@router.patch("/Privileges Worker")
 async def add_worker_user(data: UserSeach,request: Request):
     role = await Admin_services.get_role_from_cookie(request)
     if role != "admin":
@@ -104,7 +107,7 @@ async def add_worker_user(data: UserSeach,request: Request):
 
 # ___________________Категории_______________________________________________________________________________________________________________________________________________________________________________________________
 
-@router.post("/Add category")
+@router.post("/Add Category")
 async def add_new_categori(data:New_category):
     new_data = data.dict()
     new_category_id = await Admin_services.create_new_category(new_data)    
@@ -112,8 +115,7 @@ async def add_new_categori(data:New_category):
 
 
 
-
-@router.delete("/delete category")
+@router.delete("/Deete Category")
 async def delete_categories(data:find_category_by_id):
     async with async_session_maker() as session:
         result = await session.execute(
@@ -128,7 +130,24 @@ async def delete_categories(data:find_category_by_id):
         # Удаляем главную категорию
         await session.delete(category)
         await session.commit()
-        return "Категория  удалена , с ней же удалились все ее зависимые категории"
+        return f"Категория {data.name} удалена , с ней же удалились все ее зависимые категории"
 
 
-# ___________________Продукты_______________________________________________________________________________________________________________________________________________________________________________________________
+# ___________________Продукты_________________________________________________________________________________________________________________________________________________________________________________________
+@router.post("/Add Product")
+async def add_new_product(data:Products_shema):
+    new_data = data.dict()
+    new_product = await Admin_services.create_new_product(new_data)
+    return f"Продукт с именем {data.name} успешно создан!"
+
+
+
+@router.delete("/Deete Product")
+async def delete_product(data:Product_by_id):
+    async with async_session_maker() as session:
+        result = await session.execute(
+        select(Product).where(Product.id == data.id))
+        product = result.scalars().first()
+        await session.delete(product)
+        await session.commit()
+        return f"Вы успешнго удалили товар {product.name}"

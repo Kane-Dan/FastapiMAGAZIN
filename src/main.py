@@ -18,39 +18,39 @@ app.include_router(admin_router,prefix="/Admin",tags = ["Admin"])
 
 
 # mid
-@app.middleware("http")
-async def verify_access_token(request: Request, call_next):
+# @app.middleware("http")
+# async def verify_access_token(request: Request, call_next):
     
-    if "/Admin" in request.url.path:
+#     if "/Admin" in request.url.path:
         
-        access_token = request.cookies.get("access_token")
+#         access_token = request.cookies.get("access_token")
 
-        if not access_token or not access_token.startswith("Bearer"):
-            return JSONResponse(
-                status_code=401,
-                content={"message": "Authentication required for paths containing '/admin'."},
-            )
+#         if not access_token or not access_token.startswith("Bearer"):
+#             return JSONResponse(
+#                 status_code=401,
+#                 content={"message": "Authentication required for paths containing '/admin'."},
+#             )
 
-        # Извлекаем сам токен
-        token = access_token.split(" ")[1]
+#         # Извлекаем сам токен
+#         token = access_token.split(" ")[1]
 
-        try:
-            # Декодируем токен
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            user_role = payload.get("role")
+#         try:
+#             # Декодируем токен
+#             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#             user_role = payload.get("role")
 
-            # Проверяем роль
-            if user_role not in ["admin", "worker"]:
-                return JSONResponse(
-                    status_code=403,
-                    content={"message": "Access denied. Admin role required."},
-                )
-        except jwt.PyJWTError:
-            return JSONResponse(
-                status_code=401,
-                content={"message": "Invalid token."},
-            )
+#             # Проверяем роль
+#             if user_role not in ["admin", "worker"]:
+#                 return JSONResponse(
+#                     status_code=403,
+#                     content={"message": "Access denied. Admin role required."},
+#                 )
+#         except jwt.PyJWTError:
+#             return JSONResponse(
+#                 status_code=401,
+#                 content={"message": "Invalid token."},
+#             )
     
     
-    response = await call_next(request)
-    return response
+#     response = await call_next(request)
+#     return response

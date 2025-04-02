@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from sqlalchemy import select
-from src.products.schemas import Products
+from src.products.schemas import Products_shema
 from src.database import async_session_maker 
 from src.products.models import Product
 

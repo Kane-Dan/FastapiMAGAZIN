@@ -18,10 +18,10 @@ services:
       - "6379:6379"
     command: ["redis-server", "--appendonly", "yes"]
 
-  web:
+  back:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: src/Dockerfile
     container_name: fastapimagaz_web
     environment:
       DB_HOST: "db"
