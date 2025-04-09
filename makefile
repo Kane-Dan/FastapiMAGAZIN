@@ -1,6 +1,6 @@
 # Определяем переменные
 DOCKER_COMPOSE = docker-compose
-SERVICE_WEB = web
+SERVICE_WEB = back
 SERVICE_DB = db
 
 # Команды
@@ -20,7 +20,7 @@ down:
 
 # Выполнение миграций Alembic
 migrate:
-	docker-compose exec web poetry run alembic upgrade head
+	docker-compose exec back poetry run alembic upgrade head
 
 
 start: build up migrate

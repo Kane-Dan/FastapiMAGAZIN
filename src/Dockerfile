@@ -31,4 +31,4 @@ RUN poetry install --no-root
 COPY . .
 
 # Указываем команду для запуска приложения
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8030", "--reload"]
+CMD ["poetry", "run", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8030", "--reload"]
